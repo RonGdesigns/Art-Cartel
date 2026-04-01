@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Art Cartel | Cel-Shaded Supplies</title>
+    
+    <script>
+        const theme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
+    
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
 </head>
@@ -18,7 +25,11 @@
                     <feFuncG type="discrete" tableValues="0 0.3 0.6 1"/>
                     <feFuncB type="discrete" tableValues="0 0.3 0.6 1"/>
                 </feComponentTransfer>
-                <feColorMatrix type="matrix" values="1.5 0 0 0 -0.2 0 1.5 0 0 -0.2 0 0 1.5 0 -0.2 0 0 0 1 0" />
+                <feColorMatrix type="matrix" values="
+                    1.5 0 0 0 -0.2
+                    0 1.5 0 0 -0.2
+                    0 0 1.5 0 -0.2
+                    0 0 0 1 0" />
             </filter>
         </defs>
     </svg>
@@ -47,7 +58,7 @@
                             <span>Total:</span>
                             <span id="cart-total-price">$0.00</span>
                         </div>
-                        <button class="btn magnetic checkout-btn" id="checkout-btn">Checkout</button>
+                        <button class="btn magnetic checkout-btn" id="checkout-btn" style="width: 100%;">Checkout</button>
                     </div>
                 </div>
             </div>
