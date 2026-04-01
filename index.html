@@ -10,6 +10,23 @@
 </head>
 <body>
 
+    <svg style="display: none;">
+        <defs>
+            <filter id="cel-shader" x="-20%" y="-20%" width="140%" height="140%">
+                <feComponentTransfer>
+                    <feFuncR type="discrete" tableValues="0 0.3 0.6 1"/>
+                    <feFuncG type="discrete" tableValues="0 0.3 0.6 1"/>
+                    <feFuncB type="discrete" tableValues="0 0.3 0.6 1"/>
+                </feComponentTransfer>
+                <feColorMatrix type="matrix" values="
+                    1.5 0 0 0 -0.2
+                    0 1.5 0 0 -0.2
+                    0 0 1.5 0 -0.2
+                    0 0 0 1 0" />
+            </filter>
+        </defs>
+    </svg>
+
     <header>
         <div class="logo">Art Cartel</div>
         <nav>
@@ -17,21 +34,20 @@
             <a href="#">Categories</a>
             
             <div class="cart-wrapper">
-                <button class="cart-link" id="cart-toggle-btn" aria-expanded="false" aria-controls="cart-dropdown">
+                <button class="cart-link magnetic" id="cart-toggle-btn" aria-expanded="false" aria-controls="cart-dropdown">
                     Cart
                     <span class="cart-badge" id="cart-badge" aria-live="polite">0</span>
                 </button>
                 
                 <div class="cart-dropdown" id="cart-dropdown" role="dialog" aria-modal="true" aria-label="Shopping Cart">
                     <div class="cart-header-title">Your Haul</div>
-                    <div class="cart-items-container" id="cart-items-list">
-                        </div>
+                    <div class="cart-items-container" id="cart-items-list"></div>
                     <div class="cart-footer">
                         <div class="cart-total">
                             <span>Total:</span>
                             <span id="cart-total-price">$0.00</span>
                         </div>
-                        <button class="btn" id="checkout-btn" style="width: 100%; background-color: var(--danger-color); color: white;">Checkout</button>
+                        <button class="btn magnetic" id="checkout-btn" style="width: 100%; background-color: var(--danger-color); color: white;">Checkout</button>
                     </div>
                 </div>
             </div>
@@ -68,28 +84,42 @@
                 <div class="window-frame"><span class="mock-image">📓</span></div>
                 <h2 class="product-title">Premium Sketchbook</h2>
                 <div class="product-price">$24.99</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
+                <button class="btn add-to-cart-btn magnetic">Add to Cart</button>
             </div>
 
             <div class="product-card" data-price="89.99" data-category="Drawing" data-bestselling="1" data-recommended="2">
                 <div class="window-frame"><span class="mock-image">🖍️</span></div>
                 <h2 class="product-title">Pro Marker Set (72)</h2>
                 <div class="product-price">$89.99</div>
-                <button class="btn add-to-cart-btn" style="background-color: var(--danger-color); color: white;">Add to Cart</button>
+                <button class="btn add-to-cart-btn magnetic" style="background-color: var(--danger-color); color: white;">Add to Cart</button>
             </div>
 
             <div class="product-card" data-price="45.00" data-category="Painting" data-bestselling="4" data-recommended="4">
                 <div class="window-frame"><span class="mock-image">🖌️</span></div>
                 <h2 class="product-title">Acrylic Paint Bundle</h2>
                 <div class="product-price">$45.00</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
+                <button class="btn add-to-cart-btn magnetic">Add to Cart</button>
             </div>
 
             <div class="product-card" data-price="120.00" data-category="Equipment" data-bestselling="10" data-recommended="5">
                 <div class="window-frame"><span class="mock-image">🖼️</span></div>
                 <h2 class="product-title">Studio Easel</h2>
                 <div class="product-price">$120.00</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
+                <button class="btn add-to-cart-btn magnetic">Add to Cart</button>
+            </div>
+
+            <div class="product-card" data-price="14.50" data-category="Drawing" data-bestselling="2" data-recommended="6">
+                <div class="window-frame"><span class="mock-image">✏️</span></div>
+                <h2 class="product-title">Graphite Pencil Set (12pc)</h2>
+                <div class="product-price">$14.50</div>
+                <button class="btn add-to-cart-btn magnetic">Add to Cart</button>
+            </div>
+
+            <div class="product-card" data-price="32.00" data-category="Painting" data-bestselling="6" data-recommended="3">
+                <div class="window-frame"><span class="mock-image">🎨</span></div>
+                <h2 class="product-title">Watercolor Pan Set</h2>
+                <div class="product-price">$32.00</div>
+                <button class="btn add-to-cart-btn magnetic" style="background-color: var(--accent-color);">Add to Cart</button>
             </div>
 
         </div>
