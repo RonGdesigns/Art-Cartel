@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Art Cartel | Cel-Shaded Supplies</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
 </head>
 <body>
 
@@ -15,12 +17,12 @@
             <a href="#">Categories</a>
             
             <div class="cart-wrapper">
-                <a href="#" class="cart-link" id="cart-toggle-btn">
+                <button class="cart-link" id="cart-toggle-btn" aria-expanded="false" aria-controls="cart-dropdown">
                     Cart
-                    <span class="cart-badge" id="cart-badge">0</span>
-                </a>
+                    <span class="cart-badge" id="cart-badge" aria-live="polite">0</span>
+                </button>
                 
-                <div class="cart-dropdown" id="cart-dropdown">
+                <div class="cart-dropdown" id="cart-dropdown" role="dialog" aria-modal="true" aria-label="Shopping Cart">
                     <div class="cart-header-title">Your Haul</div>
                     <div class="cart-items-container" id="cart-items-list">
                         </div>
@@ -29,7 +31,7 @@
                             <span>Total:</span>
                             <span id="cart-total-price">$0.00</span>
                         </div>
-                        <button class="btn" style="width: 100%; background-color: var(--danger-color); color: white;">Checkout</button>
+                        <button class="btn" id="checkout-btn" style="width: 100%; background-color: var(--danger-color); color: white;">Checkout</button>
                     </div>
                 </div>
             </div>
@@ -88,90 +90,6 @@
                 <h2 class="product-title">Studio Easel</h2>
                 <div class="product-price">$120.00</div>
                 <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="14.50" data-category="Drawing" data-bestselling="2" data-recommended="6">
-                <div class="window-frame"><span class="mock-image">✏️</span></div>
-                <h2 class="product-title">Graphite Pencil Set (12pc)</h2>
-                <div class="product-price">$14.50</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="32.00" data-category="Painting" data-bestselling="6" data-recommended="3">
-                <div class="window-frame"><span class="mock-image">🎨</span></div>
-                <h2 class="product-title">Watercolor Pan Set</h2>
-                <div class="product-price">$32.00</div>
-                <button class="btn add-to-cart-btn" style="background-color: var(--accent-color);">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="5.99" data-category="Accessories" data-bestselling="3" data-recommended="10">
-                <div class="window-frame"><span class="mock-image">🧽</span></div>
-                <h2 class="product-title">Kneaded Eraser 3-Pack</h2>
-                <div class="product-price">$5.99</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="28.99" data-category="Painting" data-bestselling="8" data-recommended="7">
-                <div class="window-frame"><span class="mock-image">🖌️</span></div>
-                <h2 class="product-title">Synthetic Brush Bundle</h2>
-                <div class="product-price">$28.99</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="35.00" data-category="Paper" data-bestselling="7" data-recommended="8">
-                <div class="window-frame"><span class="mock-image">🖼️</span></div>
-                <h2 class="product-title">Blank Canvas 5-Pack</h2>
-                <div class="product-price">$35.00</div>
-                <button class="btn add-to-cart-btn" style="background-color: var(--danger-color); color: white;">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="42.50" data-category="Drawing" data-bestselling="12" data-recommended="9">
-                <div class="window-frame"><span class="mock-image">🖋️</span></div>
-                <h2 class="product-title">Calligraphy Pen Kit</h2>
-                <div class="product-price">$42.50</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="18.99" data-category="Sculpting" data-bestselling="9" data-recommended="11">
-                <div class="window-frame"><span class="mock-image">🧱</span></div>
-                <h2 class="product-title">Polymer Modeling Clay</h2>
-                <div class="product-price">$18.99</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="55.00" data-category="Drawing" data-bestselling="11" data-recommended="12">
-                <div class="window-frame"><span class="mock-image">🖍️</span></div>
-                <h2 class="product-title">Soft Pastels (48 Colors)</h2>
-                <div class="product-price">$55.00</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="22.00" data-category="Accessories" data-bestselling="13" data-recommended="14">
-                <div class="window-frame"><span class="mock-image">📏</span></div>
-                <h2 class="product-title">Self-Healing Cutting Mat</h2>
-                <div class="product-price">$22.00</div>
-                <button class="btn add-to-cart-btn" style="background-color: var(--accent-color);">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="8.50" data-category="Drawing" data-bestselling="15" data-recommended="15">
-                <div class="window-frame"><span class="mock-image">🪵</span></div>
-                <h2 class="product-title">Vine Charcoal Sticks</h2>
-                <div class="product-price">$8.50</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="11.25" data-category="Accessories" data-bestselling="14" data-recommended="16">
-                <div class="window-frame"><span class="mock-image">🔪</span></div>
-                <h2 class="product-title">Precision Craft Knife</h2>
-                <div class="product-price">$11.25</div>
-                <button class="btn add-to-cart-btn">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-price="48.00" data-category="Accessories" data-bestselling="16" data-recommended="13">
-                <div class="window-frame"><span class="mock-image">🧳</span></div>
-                <h2 class="product-title">A3 Art Portfolio Case</h2>
-                <div class="product-price">$48.00</div>
-                <button class="btn add-to-cart-btn" style="background-color: var(--danger-color); color: white;">Add to Cart</button>
             </div>
 
         </div>
