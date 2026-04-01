@@ -1,220 +1,204 @@
-document.addEventListener('DOMContentLoaded', () => {
-    gsap.registerPlugin(Flip);
+/* Base Variables & Fluid Typography */
+:root {
+    --bg-color: #f4f4f0;
+    --primary-color: #ffde00; 
+    --accent-color: #00e5ff; 
+    --danger-color: #ff0055; 
+    --text-color: #000;
+    --border-width: 4px;
+    --shadow-offset: 6px;
 
-    // --- 1. STATE MANAGEMENT ---
-    const state = { cart: {}, isCartOpen: false };
-    
-    const elements = {
-        toggleBtn: document.getElementById('cart-toggle-btn'),
-        dropdown: document.getElementById('cart-dropdown'),
-        itemsList: document.getElementById('cart-items-list'),
-        totalPrice: document.getElementById('cart-total-price'),
-        badge: document.getElementById('cart-badge'),
-        checkoutBtn: document.getElementById('checkout-btn')
-    };
-    
-    // --- 2. ACCESSIBLE CART TOGGLE ---
-    elements.toggleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        state.isCartOpen = !state.isCartOpen;
-        elements.dropdown.classList.toggle('active', state.isCartOpen);
-        elements.toggleBtn.setAttribute('aria-expanded', state.isCartOpen);
-        if(state.isCartOpen) elements.checkoutBtn.focus();
-    });
+    --step--1: clamp(0.83rem, 0.78rem + 0.23vw, 0.96rem);
+    --step-0: clamp(1.00rem, 0.91rem + 0.43vw, 1.25rem);
+    --step-1: clamp(1.20rem, 1.07rem + 0.65vw, 1.58rem);
+    --step-2: clamp(1.44rem, 1.25rem + 0.96vw, 2.00rem);
+    --step-4: clamp(2.07rem, 1.68rem + 1.96vw, 3.20rem);
+}
 
-    document.addEventListener('click', (e) => {
-        if (state.isCartOpen && !elements.toggleBtn.contains(e.target) && !elements.dropdown.contains(e.target)) {
-            state.isCartOpen = false;
-            elements.dropdown.classList.remove('active');
-            elements.toggleBtn.setAttribute('aria-expanded', 'false');
-        }
-    });
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap');
 
-    // --- 3. GRANULAR DOM RENDERER ---
-    function renderCart() {
-        let totalItems = 0; let totalPrice = 0;
-        const itemKeys = Object.keys(state.cart);
+body {
+    font-family: 'Nunito', sans-serif;
+    font-size: var(--step-0);
+    background-color: var(--bg-color);
+    background-image: radial-gradient(#ccc 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+}
 
-        if (itemKeys.length === 0) {
-            elements.itemsList.innerHTML = '<div class="empty-cart-msg">Your cart is empty!</div>';
-            elements.badge.style.display = 'none';
-            elements.totalPrice.textContent = `$0.00`;
-            return;
-        }
+@keyframes art-jump {
+    0%   { transform: translateY(0px) rotate(0deg); }
+    30%  { transform: translateY(-30px) rotate(-5deg); }
+    50%  { transform: translateY(-35px) rotate(0deg); }
+    70%  { transform: translateY(-30px) rotate(5deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
 
-        const emptyMsg = elements.itemsList.querySelector('.empty-cart-msg');
-        if (emptyMsg) emptyMsg.remove();
+@keyframes badge-bump {
+    0%   { transform: scale(1) rotate(0deg); }
+    50%  { transform: scale(1.5) rotate(15deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
 
-        Array.from(elements.itemsList.children).forEach(node => {
-            const title = node.dataset.id;
-            if (!state.cart[title]) node.remove();
-        });
+.bump { animation: badge-bump 0.4s ease-out; }
 
-        itemKeys.forEach(key => {
-            const item = state.cart[key];
-            totalItems += item.quantity;
-            totalPrice += (item.price * item.quantity);
+header {
+    background-color: #fff; border-bottom: var(--border-width) solid #000;
+    padding: 1rem 2rem; display: flex; justify-content: space-between;
+    align-items: center; position: sticky; top: 0; z-index: 100;
+}
 
-            let rowNode = elements.itemsList.querySelector(`[data-id="${key}"]`);
-            if (rowNode) {
-                rowNode.querySelector('.qty-number').textContent = item.quantity;
-                rowNode.querySelector('.cart-item-price').textContent = `$${(item.price * item.quantity).toFixed(2)}`;
-            } else {
-                rowNode = document.createElement('div');
-                rowNode.classList.add('cart-item');
-                rowNode.dataset.id = key;
-                rowNode.innerHTML = `
-                    <div class="cart-item-icon">${item.icon}</div>
-                    <div class="cart-item-details">
-                        <h4 class="cart-item-title">${key}</h4>
-                        <div class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</div>
-                    </div>
-                    <div class="qty-controls">
-                        <button class="qty-btn minus-btn" aria-label="Decrease quantity">-</button>
-                        <span class="qty-number">${item.quantity}</span>
-                        <button class="qty-btn plus-btn" aria-label="Increase quantity">+</button>
-                    </div>
-                `;
-                rowNode.querySelector('.plus-btn').addEventListener('click', () => updateQuantity(key, 1));
-                rowNode.querySelector('.minus-btn').addEventListener('click', () => updateQuantity(key, -1));
-                elements.itemsList.appendChild(rowNode);
-            }
-        });
+.logo {
+    font-size: var(--step-2); font-weight: 900; text-transform: uppercase;
+    letter-spacing: 2px; color: #fff;
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px  2px 0 #000, 2px  2px 0 #000, 4px  4px 0 #000; cursor: pointer;
+}
 
-        elements.totalPrice.textContent = `$${totalPrice.toFixed(2)}`;
-        elements.badge.textContent = totalItems;
-        elements.badge.style.display = 'flex';
-    }
+nav { display: flex; align-items: center; }
+nav a {
+    text-decoration: none; color: #000; font-weight: 700; margin-left: 2rem;
+    font-size: var(--step-0); text-transform: uppercase; transition: color 0.2s;
+}
+nav a:hover { color: var(--danger-color); }
 
-    function updateQuantity(title, change) {
-        state.cart[title].quantity += change;
-        if (state.cart[title].quantity <= 0) delete state.cart[title];
-        triggerBadgeAnimation();
-        renderCart();
-    }
+.cart-wrapper { position: relative; margin-left: 2rem; }
 
-    function triggerBadgeAnimation() {
-        elements.badge.classList.remove('bump');
-        void elements.badge.offsetWidth; 
-        elements.badge.classList.add('bump');
-    }
+.cart-link {
+    background: none; border: none; padding: 0; font-family: inherit;
+    color: #000; font-weight: 700; font-size: var(--step-0); text-transform: uppercase;
+    position: relative; cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center;
+}
+.cart-link:hover { color: var(--danger-color); }
+.cart-link:focus-visible { outline: 3px solid var(--accent-color); outline-offset: 4px; }
 
-    // --- 4. GSAP SPATIAL ANIMATION ---
-    function animateToCart(productCardElement) {
-        const productImage = productCardElement.querySelector('.mock-image');
-        const flyingItem = productImage.cloneNode(true);
-        
-        flyingItem.style.position = 'fixed';
-        flyingItem.style.zIndex = '9999';
-        flyingItem.style.margin = '0';
-        flyingItem.style.pointerEvents = 'none';
-        
-        const startRect = productImage.getBoundingClientRect();
-        flyingItem.style.top = `${startRect.top}px`;
-        flyingItem.style.left = `${startRect.left}px`;
-        flyingItem.style.width = `${startRect.width}px`;
-        flyingItem.style.height = `${startRect.height}px`;
-        
-        document.body.appendChild(flyingItem);
-        const endRect = elements.toggleBtn.getBoundingClientRect();
+.cart-badge {
+    position: absolute; top: -12px; right: -20px; background-color: var(--danger-color);
+    color: #fff; border: 2px solid #000; font-size: var(--step--1); font-weight: 900;
+    padding: 2px 6px; border-radius: 50%; display: none; align-items: center;
+    justify-content: center; box-shadow: 2px 2px 0px #000; transform-origin: center;
+}
 
-        gsap.to(flyingItem, {
-            top: endRect.top + (endRect.height / 2),
-            left: endRect.left,
-            scale: 0.3,
-            opacity: 0.2,
-            duration: 0.75,
-            ease: "back.in(1.2)", 
-            onComplete: () => {
-                flyingItem.remove();
-                triggerBadgeAnimation();
-                renderCart();
-            }
-        });
-    }
+.cart-dropdown {
+    position: absolute; top: 150%; right: 0; width: clamp(300px, 90vw, 350px);
+    background: #fff; border: var(--border-width) solid #000; border-radius: 12px;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0px #000; display: none;
+    flex-direction: column; z-index: 200; overflow: hidden;
+}
+.cart-dropdown.active { display: flex; }
 
-    // --- 5. MAGNETIC UI MICRO-INTERACTIONS ---
-    function initMagneticButtons() {
-        const magneticElements = document.querySelectorAll('.magnetic');
-        
-        magneticElements.forEach(elem => {
-            elem.addEventListener('mousemove', (e) => {
-                const rect = elem.getBoundingClientRect();
-                // Calculate distance from center of the button
-                const h = rect.width / 2;
-                const w = rect.height / 2;
-                const x = e.clientX - rect.left - h;
-                const y = e.clientY - rect.top - w;
+.cart-header-title {
+    background-color: var(--primary-color); border-bottom: 3px solid #000;
+    padding: 1rem; font-weight: 900; font-size: var(--step-1);
+    text-transform: uppercase; text-align: center;
+}
 
-                // Move button slightly towards the cursor
-                gsap.to(elem, {
-                    x: x * 0.3, // Strength multiplier
-                    y: y * 0.3,
-                    duration: 0.4,
-                    ease: "power2.out"
-                });
-            });
+.cart-items-container { max-height: 300px; overflow-y: auto; background-color: #f9f9f9; }
+.cart-items-container::-webkit-scrollbar { width: 10px; }
+.cart-items-container::-webkit-scrollbar-track { background: #f4f4f0; border-left: 2px solid #000; }
+.cart-items-container::-webkit-scrollbar-thumb { background: var(--accent-color); border-left: 2px solid #000; border-bottom: 2px solid #000; }
 
-            // Snap back like a rubber band when cursor leaves
-            elem.addEventListener('mouseleave', () => {
-                gsap.to(elem, {
-                    x: 0,
-                    y: 0,
-                    duration: 0.7,
-                    ease: "elastic.out(1, 0.3)"
-                });
-            });
-        });
-    }
+.cart-item {
+    display: flex; align-items: center; padding: 1rem;
+    border-bottom: 2px solid #000; gap: 1rem; background: #fff;
+}
+.cart-item-icon {
+    font-size: var(--step-2); width: 50px; height: 50px; display: flex;
+    align-items: center; justify-content: center; border: 2px solid #000;
+    background: var(--bg-color); border-radius: 6px;
+}
+.cart-item-details { flex-grow: 1; }
+.cart-item-title { font-weight: 900; font-size: var(--step-0); margin: 0 0 0.2rem 0; line-height: 1.2; }
+.cart-item-price { font-weight: 700; color: #555; font-size: var(--step--1); }
 
-    // --- 6. ADD TO CART BINDINGS ---
-    const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+.qty-controls {
+    display: flex; align-items: center; gap: 0.5rem; border: 2px solid #000;
+    border-radius: 6px; background: var(--bg-color); padding: 2px;
+}
+.qty-btn {
+    background: #fff; border: 2px solid #000; border-radius: 4px; width: 24px;
+    height: 24px; font-weight: 900; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: background 0.1s;
+}
+.qty-btn:active { background: #ccc; }
+.qty-number { font-weight: 900; font-size: var(--step-0); min-width: 20px; text-align: center; }
 
-    addToCartBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.product-card');
-            const title = card.querySelector('.product-title').textContent;
-            const price = parseFloat(card.dataset.price);
-            const icon = card.querySelector('.mock-image').textContent;
+.cart-footer { padding: 1rem; background: #fff; border-top: 3px solid #000; }
+.cart-total { display: flex; justify-content: space-between; font-size: var(--step-1); font-weight: 900; margin-bottom: 1rem; }
+.empty-cart-msg { padding: 2rem; text-align: center; font-weight: 700; color: #666; font-style: italic; }
 
-            if (state.cart[title]) {
-                state.cart[title].quantity += 1;
-            } else {
-                state.cart[title] = { price: price, icon: icon, quantity: 1 };
-            }
+.hero {
+    text-align: center; padding: 5rem 1rem; background-color: var(--accent-color);
+    border-bottom: var(--border-width) solid #000;
+}
+.hero h1 { font-size: var(--step-4); font-weight: 900; margin-bottom: 0.5rem; }
+.hero p { font-size: var(--step-1); margin-bottom: 2.5rem; }
 
-            animateToCart(card);
+.hero-icons { display: flex; justify-content: center; gap: 2vw; margin-top: 1rem; flex-wrap: wrap; }
+.hero-icon { font-size: var(--step-4); cursor: pointer; display: inline-block; filter: drop-shadow(4px 4px 0px #000); transition: transform 0.1s ease; }
+.hero-icon:hover { animation: art-jump 0.5s ease-out; }
 
-            const originalText = btn.textContent;
-            btn.textContent = 'ADDED! 💥';
-            setTimeout(() => { btn.textContent = originalText; }, 800);
-        });
-    });
+.controls-bar {
+    max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;
+    display: flex; align-items: center; gap: 1rem; font-weight: 900; font-size: var(--step-1);
+}
 
-    // --- 7. SORTING LOGIC ---
-    const sortSelect = document.getElementById('sort-select');
-    const grid = document.getElementById('product-grid');
-    
-    if (sortSelect && grid) {
-        sortSelect.addEventListener('change', (e) => {
-            const cards = Array.from(grid.querySelectorAll('.product-card'));
-            const sortType = e.target.value;
+.cel-select {
+    appearance: none; background-color: #fff; border: 3px solid #000;
+    padding: 0.5rem 2.5rem 0.5rem 1rem; font-family: 'Nunito', sans-serif;
+    font-weight: 900; font-size: var(--step-0); color: #000; box-shadow: 4px 4px 0px #000; cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+    background-repeat: no-repeat; background-position: right 0.8rem center;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.cel-select:focus { outline: none; }
+.cel-select:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
 
-            cards.sort((a, b) => {
-                if (sortType === 'price-low') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
-                if (sortType === 'price-high') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
-                if (sortType === 'bestselling') return parseInt(a.dataset.bestselling) - parseInt(b.dataset.bestselling);
-                if (sortType === 'recommended') return parseInt(a.dataset.recommended) - parseInt(b.dataset.recommended);
-                if (sortType === 'category') return a.dataset.category.localeCompare(b.dataset.category);
-                return 0;
-            });
+.container { max-width: 1200px; margin: 2rem auto 4rem; padding: 0 1rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 2.5rem; }
 
-            grid.innerHTML = '';
-            cards.forEach(card => grid.appendChild(card));
-        });
-    }
+.product-card {
+    background: #fff; border: var(--border-width) solid #000; border-radius: 12px;
+    padding: 1.5rem; box-shadow: var(--shadow-offset) var(--shadow-offset) 0px #000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; display: flex; flex-direction: column;
+}
+.product-card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0px #000; }
 
-    // Initialize View
-    renderCart();
-    initMagneticButtons();
-});
+.window-frame {
+    border: 3px solid #000; border-radius: 4px; background-color: #f9f9f9;
+    position: relative; overflow: hidden; aspect-ratio: 1 / 1; display: flex;
+    align-items: center; justify-content: center; margin-bottom: 1.5rem;
+    box-shadow: inset 4px 4px 0px rgba(0,0,0,0.1);
+}
+.window-frame::after {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 100%);
+    pointer-events: none; z-index: 10;
+}
+
+/* THE PIPELINE IN ACTION: Applying the SVG filter + CSS Drop Shadow */
+.mock-image, .product-image { 
+    font-size: var(--step-4); 
+    opacity: 0.9; 
+    /* The SVG Filter crushes the colors */
+    filter: url(#cel-shader) drop-shadow(4px 4px 0px #000); 
+    /* Ensures the element respects the transform origin for animations */
+    transform-origin: center;
+}
+
+.product-title { font-size: var(--step-1); font-weight: 900; margin: 0 0 0.5rem 0; }
+.product-price { font-size: var(--step-0); color: #555; margin-bottom: 1.5rem; flex-grow: 1; }
+
+.btn {
+    background-color: var(--primary-color); color: #000; border: 3px solid #000;
+    padding: 0.8rem; font-size: var(--step-0); font-weight: 900; text-transform: uppercase;
+    cursor: pointer; text-align: center; box-shadow: 3px 3px 0px #000; 
+    /* Removed transition: all so GSAP handles the magnetic math smoothly */
+}
+.btn:active { transform: translate(3px, 3px) !important; box-shadow: 0px 0px 0px #000; }
+
+footer {
+    background-color: #fff; border-top: var(--border-width) solid #000;
+    padding: 2rem; text-align: center; font-weight: 700; margin-top: 4rem;
+}
