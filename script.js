@@ -17,15 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const themeBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         
-        // 1. Check local storage, fallback to OS preference
-        const savedTheme = localStorage.getItem('theme') || 
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        // Default to light mode for the initial presentation
+        const savedTheme = localStorage.getItem('theme') || 'light';
         
-        // 2. Apply initial state
         document.documentElement.setAttribute('data-theme', savedTheme);
         themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
-        // 3. Handle Clicks
         themeBtn.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -33,16 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             
-            // GSAP spin animation for the icon swap
             gsap.to(themeIcon, { 
                 rotation: "+=360", 
                 duration: 0.5, 
-                ease: "back.out(1.5)" 
+                ease: "back.out(1.5)",
+                onComplete: () => {
+                    themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+                }
             });
-            
-            setTimeout(() => {
-                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            }, 150);
         });
     }
 
@@ -254,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Init All
+    // Init All Modules
     initThemeToggle();
     renderCart();
     initMagneticButtons();
