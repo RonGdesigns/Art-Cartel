@@ -1,166 +1,210 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- 1. CART DATA LOGIC ---
-    let cart = {}; 
-    
-    const cartToggleBtn = document.getElementById('cart-toggle-btn');
-    const cartDropdown = document.getElementById('cart-dropdown');
-    const cartItemsList = document.getElementById('cart-items-list');
-    const cartTotalPrice = document.getElementById('cart-total-price');
-    const cartBadge = document.getElementById('cart-badge');
-    
-    // Toggle dropdown visibility
-    cartToggleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        cartDropdown.classList.toggle('active');
-    });
+    // Register GSAP plugins
+    gsap.registerPlugin(Flip);
 
-    // Close dropdown if clicking outside of it
-    document.addEventListener('click', (e) => {
-        if (!cartToggleBtn.contains(e.target) && !cartDropdown.contains(e.target)) {
-            cartDropdown.classList.remove('active');
+    // --- 1. STATE MANAGEMENT (Reactivity Upgrade) ---
+    const state = {
+        cart: {},
+        isCartOpen: false
+    };
+    
+    const elements = {
+        toggleBtn: document.getElementById('cart-toggle-btn'),
+        dropdown: document.getElementById('cart-dropdown'),
+        itemsList: document.getElementById('cart-items-list'),
+        totalPrice: document.getElementById('cart-total-price'),
+        badge: document.getElementById('cart-badge'),
+        checkoutBtn: document.getElementById('checkout-btn')
+    };
+    
+    // --- 2. ACCESSIBLE CART TOGGLE ---
+    elements.toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        state.isCartOpen = !state.isCartOpen;
+        
+        elements.dropdown.classList.toggle('active', state.isCartOpen);
+        elements.toggleBtn.setAttribute('aria-expanded', state.isCartOpen);
+
+        // A11y: Trap focus gracefully if needed, or just focus first element
+        if(state.isCartOpen) {
+            elements.checkoutBtn.focus();
         }
     });
 
-    // Function to update the DOM based on the cart object
+    document.addEventListener('click', (e) => {
+        if (state.isCartOpen && !elements.toggleBtn.contains(e.target) && !elements.dropdown.contains(e.target)) {
+            state.isCartOpen = false;
+            elements.dropdown.classList.remove('active');
+            elements.toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // --- 3. GRANULAR DOM RENDERER (Performance Upgrade) ---
     function renderCart() {
-        cartItemsList.innerHTML = ''; // Clear current list
         let totalItems = 0;
         let totalPrice = 0;
+        const itemKeys = Object.keys(state.cart);
 
-        const itemKeys = Object.keys(cart);
-
+        // Handle Empty State
         if (itemKeys.length === 0) {
-            cartItemsList.innerHTML = '<div class="empty-cart-msg">Your cart is empty!</div>';
-        } else {
-            itemKeys.forEach(key => {
-                const item = cart[key];
-                totalItems += item.quantity;
-                totalPrice += (item.price * item.quantity);
+            elements.itemsList.innerHTML = '<div class="empty-cart-msg">Your cart is empty!</div>';
+            elements.badge.style.display = 'none';
+            elements.totalPrice.textContent = `$0.00`;
+            return;
+        }
 
-                // Build the HTML for this specific cart item
-                const itemEl = document.createElement('div');
-                itemEl.classList.add('cart-item');
-                itemEl.innerHTML = `
+        // Remove the empty message if it exists
+        const emptyMsg = elements.itemsList.querySelector('.empty-cart-msg');
+        if (emptyMsg) emptyMsg.remove();
+
+        // 1. Remove DOM nodes that are no longer in state
+        const existingNodes = Array.from(elements.itemsList.children);
+        existingNodes.forEach(node => {
+            const title = node.dataset.id;
+            if (!state.cart[title]) node.remove();
+        });
+
+        // 2. Add or Update nodes
+        itemKeys.forEach(key => {
+            const item = state.cart[key];
+            totalItems += item.quantity;
+            totalPrice += (item.price * item.quantity);
+
+            let rowNode = elements.itemsList.querySelector(`[data-id="${key}"]`);
+
+            if (rowNode) {
+                // Update existing node
+                rowNode.querySelector('.qty-number').textContent = item.quantity;
+                rowNode.querySelector('.cart-item-price').textContent = `$${(item.price * item.quantity).toFixed(2)}`;
+            } else {
+                // Create new node
+                rowNode = document.createElement('div');
+                rowNode.classList.add('cart-item');
+                rowNode.dataset.id = key;
+                rowNode.innerHTML = `
                     <div class="cart-item-icon">${item.icon}</div>
                     <div class="cart-item-details">
                         <h4 class="cart-item-title">${key}</h4>
                         <div class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</div>
                     </div>
                     <div class="qty-controls">
-                        <button class="qty-btn minus-btn" data-title="${key}">-</button>
+                        <button class="qty-btn minus-btn" aria-label="Decrease quantity">-</button>
                         <span class="qty-number">${item.quantity}</span>
-                        <button class="qty-btn plus-btn" data-title="${key}">+</button>
+                        <button class="qty-btn plus-btn" aria-label="Increase quantity">+</button>
                     </div>
                 `;
-                cartItemsList.appendChild(itemEl);
-            });
-        }
 
-        // Update Total Price text
-        cartTotalPrice.textContent = `$${totalPrice.toFixed(2)}`;
+                // Attach isolated listeners to new buttons
+                rowNode.querySelector('.plus-btn').addEventListener('click', () => updateQuantity(key, 1));
+                rowNode.querySelector('.minus-btn').addEventListener('click', () => updateQuantity(key, -1));
+                
+                elements.itemsList.appendChild(rowNode);
+            }
+        });
 
-        // Update the Badge Number
-        cartBadge.textContent = totalItems;
-        if (totalItems > 0) {
-            cartBadge.style.display = 'flex';
-        } else {
-            cartBadge.style.display = 'none';
-            cartDropdown.classList.remove('active'); // Close if emptied
-        }
-        
-        // Attach event listeners to the newly created + and - buttons
-        attachQuantityListeners();
+        // Update Totals & Badge
+        elements.totalPrice.textContent = `$${totalPrice.toFixed(2)}`;
+        elements.badge.textContent = totalItems;
+        elements.badge.style.display = 'flex';
     }
 
-    // Listeners for the + and - inside the dropdown
-    function attachQuantityListeners() {
-        const plusBtns = document.querySelectorAll('.plus-btn');
-        const minusBtns = document.querySelectorAll('.minus-btn');
-
-        plusBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const title = e.target.dataset.title;
-                cart[title].quantity += 1;
-                triggerBadgeAnimation();
-                renderCart();
-            });
-        });
-
-        minusBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const title = e.target.dataset.title;
-                cart[title].quantity -= 1;
-                // Remove item completely if it hits 0
-                if (cart[title].quantity <= 0) {
-                    delete cart[title];
-                }
-                triggerBadgeAnimation();
-                renderCart();
-            });
-        });
+    function updateQuantity(title, change) {
+        state.cart[title].quantity += change;
+        if (state.cart[title].quantity <= 0) {
+            delete state.cart[title];
+        }
+        triggerBadgeAnimation();
+        renderCart();
     }
 
     function triggerBadgeAnimation() {
-        cartBadge.classList.remove('bump');
-        void cartBadge.offsetWidth; // Trigger reflow
-        cartBadge.classList.add('bump');
+        elements.badge.classList.remove('bump');
+        void elements.badge.offsetWidth; // Trigger reflow
+        elements.badge.classList.add('bump');
     }
 
-    // --- 2. ADD TO CART BUTTONS ON MAIN PAGE ---
+    // --- 4. GSAP SPATIAL ANIMATION (The Plus One) ---
+    function animateToCart(productCardElement) {
+        const productImage = productCardElement.querySelector('.mock-image');
+        const flyingItem = productImage.cloneNode(true);
+        
+        flyingItem.style.position = 'fixed';
+        flyingItem.style.zIndex = '9999';
+        flyingItem.style.margin = '0';
+        flyingItem.style.pointerEvents = 'none';
+        
+        // Start Position
+        const startRect = productImage.getBoundingClientRect();
+        flyingItem.style.top = `${startRect.top}px`;
+        flyingItem.style.left = `${startRect.left}px`;
+        flyingItem.style.width = `${startRect.width}px`;
+        flyingItem.style.height = `${startRect.height}px`;
+        
+        document.body.appendChild(flyingItem);
+
+        // End Position
+        const endRect = elements.toggleBtn.getBoundingClientRect();
+
+        gsap.to(flyingItem, {
+            top: endRect.top + (endRect.height / 2),
+            left: endRect.left,
+            scale: 0.3,
+            opacity: 0.2,
+            duration: 0.75,
+            ease: "back.in(1.2)", 
+            onComplete: () => {
+                flyingItem.remove();
+                triggerBadgeAnimation();
+                renderCart(); // Finalize render after item hits cart
+            }
+        });
+    }
+
+    // --- 5. ADD TO CART BINDINGS ---
     const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
 
     addToCartBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Traverse up to find the product card elements
             const card = e.target.closest('.product-card');
             const title = card.querySelector('.product-title').textContent;
-            const priceText = card.querySelector('.product-price').textContent;
-            const price = parseFloat(priceText.replace('$', ''));
+            const price = parseFloat(card.dataset.price);
             const icon = card.querySelector('.mock-image').textContent;
 
-            // Add to cart object or increment if it exists
-            if (cart[title]) {
-                cart[title].quantity += 1;
+            // Update State
+            if (state.cart[title]) {
+                state.cart[title].quantity += 1;
             } else {
-                cart[title] = { price: price, icon: icon, quantity: 1 };
+                state.cart[title] = { price: price, icon: icon, quantity: 1 };
             }
 
-            triggerBadgeAnimation();
-            renderCart();
+            // Trigger Animation (Render happens on complete)
+            animateToCart(card);
 
-            // Visual feedback on the button itself
+            // Button Feedback
             const originalText = btn.textContent;
             btn.textContent = 'ADDED! 💥';
             setTimeout(() => { btn.textContent = originalText; }, 800);
         });
     });
 
-    // Initialize empty cart view
+    // Initialize
     renderCart();
 
-    // --- 3. SORTING LOGIC ---
+    // --- 6. SORTING LOGIC ---
     const sortSelect = document.getElementById('sort-select');
     const grid = document.getElementById('product-grid');
     
-    // Check if the sort select exists (in case you reuse this script on pages without a product grid)
     if (sortSelect && grid) {
         sortSelect.addEventListener('change', (e) => {
             const cards = Array.from(grid.querySelectorAll('.product-card'));
             const sortType = e.target.value;
 
             cards.sort((a, b) => {
-                if (sortType === 'price-low') {
-                    return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
-                } else if (sortType === 'price-high') {
-                    return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
-                } else if (sortType === 'bestselling') {
-                    return parseInt(a.dataset.bestselling) - parseInt(b.dataset.bestselling);
-                } else if (sortType === 'recommended') {
-                    return parseInt(a.dataset.recommended) - parseInt(b.dataset.recommended);
-                } else if (sortType === 'category') {
-                    return a.dataset.category.localeCompare(b.dataset.category);
-                }
+                if (sortType === 'price-low') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                if (sortType === 'price-high') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                if (sortType === 'bestselling') return parseInt(a.dataset.bestselling) - parseInt(b.dataset.bestselling);
+                if (sortType === 'recommended') return parseInt(a.dataset.recommended) - parseInt(b.dataset.recommended);
+                if (sortType === 'category') return a.dataset.category.localeCompare(b.dataset.category);
                 return 0;
             });
 
@@ -168,5 +212,4 @@ document.addEventListener('DOMContentLoaded', () => {
             cards.forEach(card => grid.appendChild(card));
         });
     }
-
 });
