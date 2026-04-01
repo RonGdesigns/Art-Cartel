@@ -1,12 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Register GSAP plugins
     gsap.registerPlugin(Flip);
 
-    // --- 1. STATE MANAGEMENT (Reactivity Upgrade) ---
-    const state = {
-        cart: {},
-        isCartOpen: false
-    };
+    const state = { cart: {}, isCartOpen: false };
     
     const elements = {
         toggleBtn: document.getElementById('cart-toggle-btn'),
@@ -17,18 +12,47 @@ document.addEventListener('DOMContentLoaded', () => {
         checkoutBtn: document.getElementById('checkout-btn')
     };
     
-    // --- 2. ACCESSIBLE CART TOGGLE ---
+    // --- 1. THEME TOGGLE LOGIC ---
+    function initThemeToggle() {
+        const themeBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        
+        // 1. Check local storage, fallback to OS preference
+        const savedTheme = localStorage.getItem('theme') || 
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        
+        // 2. Apply initial state
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+        // 3. Handle Clicks
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // GSAP spin animation for the icon swap
+            gsap.to(themeIcon, { 
+                rotation: "+=360", 
+                duration: 0.5, 
+                ease: "back.out(1.5)" 
+            });
+            
+            setTimeout(() => {
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            }, 150);
+        });
+    }
+
+    // --- 2. CART TOGGLE ---
     elements.toggleBtn.addEventListener('click', (e) => {
         e.preventDefault();
         state.isCartOpen = !state.isCartOpen;
-        
         elements.dropdown.classList.toggle('active', state.isCartOpen);
         elements.toggleBtn.setAttribute('aria-expanded', state.isCartOpen);
-
-        // A11y: Trap focus gracefully if needed, or just focus first element
-        if(state.isCartOpen) {
-            elements.checkoutBtn.focus();
-        }
+        if(state.isCartOpen) elements.checkoutBtn.focus();
     });
 
     document.addEventListener('click', (e) => {
@@ -39,13 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 3. GRANULAR DOM RENDERER (Performance Upgrade) ---
+    // --- 3. DOM RENDERER ---
     function renderCart() {
-        let totalItems = 0;
-        let totalPrice = 0;
+        let totalItems = 0; let totalPrice = 0;
         const itemKeys = Object.keys(state.cart);
 
-        // Handle Empty State
         if (itemKeys.length === 0) {
             elements.itemsList.innerHTML = '<div class="empty-cart-msg">Your cart is empty!</div>';
             elements.badge.style.display = 'none';
@@ -53,31 +75,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Remove the empty message if it exists
         const emptyMsg = elements.itemsList.querySelector('.empty-cart-msg');
         if (emptyMsg) emptyMsg.remove();
 
-        // 1. Remove DOM nodes that are no longer in state
-        const existingNodes = Array.from(elements.itemsList.children);
-        existingNodes.forEach(node => {
+        Array.from(elements.itemsList.children).forEach(node => {
             const title = node.dataset.id;
             if (!state.cart[title]) node.remove();
         });
 
-        // 2. Add or Update nodes
         itemKeys.forEach(key => {
             const item = state.cart[key];
             totalItems += item.quantity;
             totalPrice += (item.price * item.quantity);
 
             let rowNode = elements.itemsList.querySelector(`[data-id="${key}"]`);
-
             if (rowNode) {
-                // Update existing node
                 rowNode.querySelector('.qty-number').textContent = item.quantity;
                 rowNode.querySelector('.cart-item-price').textContent = `$${(item.price * item.quantity).toFixed(2)}`;
             } else {
-                // Create new node
                 rowNode = document.createElement('div');
                 rowNode.classList.add('cart-item');
                 rowNode.dataset.id = key;
@@ -93,16 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="qty-btn plus-btn" aria-label="Increase quantity">+</button>
                     </div>
                 `;
-
-                // Attach isolated listeners to new buttons
                 rowNode.querySelector('.plus-btn').addEventListener('click', () => updateQuantity(key, 1));
                 rowNode.querySelector('.minus-btn').addEventListener('click', () => updateQuantity(key, -1));
-                
                 elements.itemsList.appendChild(rowNode);
             }
         });
 
-        // Update Totals & Badge
         elements.totalPrice.textContent = `$${totalPrice.toFixed(2)}`;
         elements.badge.textContent = totalItems;
         elements.badge.style.display = 'flex';
@@ -110,20 +121,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateQuantity(title, change) {
         state.cart[title].quantity += change;
-        if (state.cart[title].quantity <= 0) {
-            delete state.cart[title];
-        }
+        if (state.cart[title].quantity <= 0) delete state.cart[title];
         triggerBadgeAnimation();
         renderCart();
     }
 
     function triggerBadgeAnimation() {
         elements.badge.classList.remove('bump');
-        void elements.badge.offsetWidth; // Trigger reflow
+        void elements.badge.offsetWidth; 
         elements.badge.classList.add('bump');
     }
 
-    // --- 4. GSAP SPATIAL ANIMATION (The Plus One) ---
+    // --- 4. GSAP SPATIAL ANIMATION ---
     function animateToCart(productCardElement) {
         const productImage = productCardElement.querySelector('.mock-image');
         const flyingItem = productImage.cloneNode(true);
@@ -133,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         flyingItem.style.margin = '0';
         flyingItem.style.pointerEvents = 'none';
         
-        // Start Position
         const startRect = productImage.getBoundingClientRect();
         flyingItem.style.top = `${startRect.top}px`;
         flyingItem.style.left = `${startRect.left}px`;
@@ -141,8 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         flyingItem.style.height = `${startRect.height}px`;
         
         document.body.appendChild(flyingItem);
-
-        // End Position
         const endRect = elements.toggleBtn.getBoundingClientRect();
 
         gsap.to(flyingItem, {
@@ -155,42 +161,77 @@ document.addEventListener('DOMContentLoaded', () => {
             onComplete: () => {
                 flyingItem.remove();
                 triggerBadgeAnimation();
-                renderCart(); // Finalize render after item hits cart
+                renderCart();
             }
         });
     }
 
-    // --- 5. ADD TO CART BINDINGS ---
-    const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+    // --- 5. MAGNETIC UI ---
+    function initMagneticButtons() {
+        const magneticElements = document.querySelectorAll('.magnetic');
+        
+        magneticElements.forEach(elem => {
+            elem.addEventListener('mousemove', (e) => {
+                const rect = elem.getBoundingClientRect();
+                const h = rect.width / 2;
+                const w = rect.height / 2;
+                const x = e.clientX - rect.left - h;
+                const y = e.clientY - rect.top - w;
 
-    addToCartBtns.forEach(btn => {
+                gsap.to(elem, { x: x * 0.3, y: y * 0.3, duration: 0.4, ease: "power2.out" });
+            });
+
+            elem.addEventListener('mouseleave', () => {
+                gsap.to(elem, { x: 0, y: 0, duration: 0.7, ease: "elastic.out(1, 0.3)" });
+            });
+        });
+    }
+
+    // --- 6. HOLOGRAPHIC GLASS REFLECTION ---
+    function initHolographicGlass() {
+        const cards = document.querySelectorAll('.product-card');
+        
+        cards.forEach(card => {
+            const frame = card.querySelector('.window-frame');
+            
+            card.addEventListener('mousemove', (e) => {
+                const rect = frame.getBoundingClientRect();
+                const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+                const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                frame.style.setProperty('--mouse-x', `${xPercent}%`);
+                frame.style.setProperty('--mouse-y', `${yPercent}%`);
+            });
+
+            card.addEventListener('mouseleave', () => {
+                frame.style.setProperty('--mouse-x', `50%`);
+                frame.style.setProperty('--mouse-y', `50%`);
+            });
+        });
+    }
+
+    // --- 7. ADD TO CART BINDINGS ---
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const card = e.target.closest('.product-card');
             const title = card.querySelector('.product-title').textContent;
             const price = parseFloat(card.dataset.price);
             const icon = card.querySelector('.mock-image').textContent;
 
-            // Update State
             if (state.cart[title]) {
                 state.cart[title].quantity += 1;
             } else {
                 state.cart[title] = { price: price, icon: icon, quantity: 1 };
             }
 
-            // Trigger Animation (Render happens on complete)
             animateToCart(card);
-
-            // Button Feedback
             const originalText = btn.textContent;
             btn.textContent = 'ADDED! 💥';
             setTimeout(() => { btn.textContent = originalText; }, 800);
         });
     });
 
-    // Initialize
-    renderCart();
-
-    // --- 6. SORTING LOGIC ---
+    // --- 8. SORTING LOGIC ---
     const sortSelect = document.getElementById('sort-select');
     const grid = document.getElementById('product-grid');
     
@@ -212,4 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cards.forEach(card => grid.appendChild(card));
         });
     }
+
+    // Init All
+    initThemeToggle();
+    renderCart();
+    initMagneticButtons();
+    initHolographicGlass();
 });
